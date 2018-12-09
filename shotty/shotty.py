@@ -1,8 +1,24 @@
 import boto3
 import botocore
 import click
+
 session = boto3.Session(profile_name='pajton')
 ec2 = session.resource('ec2')
+
+def filter_instances(project):
+    instances = []
+
+    if project:
+        filters = [{'Name':'tag:Project', 'Values':[project]}]
+        instances = ec2.instances.filter(Filters=filters)
+    else:
+        instances = ec2.instances.all()
+
+    return instances
+
+def has_pending_snapshot(volume):
+    snapshots = list(volume.snapshots.all())
+    return snapshots and snapshots[0].state == 'pending'
 
 @click.group()
 def cli():
@@ -65,14 +81,7 @@ def list_volumes(project):
 @cli.group('instances')
 def instances():
     """Commands for instances"""
-def filter_instances(project):
-    instances = []
-    if project:
-        filters = [{'Name':'tag:Project', 'Values':[project]}]
-        instances = ec2.instances.filter(Filters=filters)
-    else:
-        instances = ec2.instances.all()
-    return instances
+
 @instances.command('snapshot',
     help="Create snapshotsof all volumes")
 @click.option('--project', default=None,
@@ -89,6 +98,10 @@ def create_snapshots(project):
         i.wait_until_stopped()
 
         for v in i.volumes.all():
+            if has_pending_snapshot(v):
+                print(" Skipping {0}, snapshot already in progress".format(v.id))
+                continue
+
             print("Creating snapshot of {0}".format(v.id))
             v.create_snapshot(Description="Created by Snapshot-Anal-Izer")
 
