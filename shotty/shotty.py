@@ -1,4 +1,5 @@
 import boto3
+import botocore
 import click
 session = boto3.Session(profile_name='pajton')
 ec2 = session.resource('ec2')
@@ -87,7 +88,7 @@ def create_snapshots(project):
         print("Starting {0}...".format(i.id))
 
         i.start()
-        i.wait_until_running()  
+        i.wait_until_running()
 
     print("Job's done!")
 
@@ -118,7 +119,12 @@ def stop_instances(project):
 
     for i in instances:
         print("Stopping {0}...".format(i.id))
-        i.stop()
+        try:
+            i.stop()
+        except botocore.exceptions.ClientError as e:
+            print(" Cound not stop {0}".format(i.id) + str(e))
+            continue
+    return
 @instances.command('start')
 @click.option('--project', default=None, help="Only instances for project (tag Project:<name>)")
 def start_instances(project):
@@ -128,7 +134,12 @@ def start_instances(project):
 
     for i in instances:
         print("Starting {0}...".format(i.id))
-        i.start()
+        try:
+            i.start()
+        except botocore.exceptions.ClientError as e:
+            print(" Cound not start {0}".format(i.id) + str(e))
+            continue
+    return
 
 if __name__ == '__main__':
         cli()
