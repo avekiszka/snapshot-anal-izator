@@ -15,7 +15,7 @@ def snapshots():
 
 @snapshots.command('list')
 @click.option('--project', default=None, help="Only snapshots for project (tag Project:<name>)")
-def list_volumes(project):
+def list_snapshots(project):
     "List EC2 snapshots"
 
     instances = filter_instances(project)
@@ -122,7 +122,7 @@ def stop_instances(project):
         try:
             i.stop()
         except botocore.exceptions.ClientError as e:
-            print(" Cound not stop {0}".format(i.id) + str(e))
+            print(" Cound not stop {0} ".format(i.id) + str(e))
             continue
     return
 @instances.command('start')
@@ -137,7 +137,7 @@ def start_instances(project):
         try:
             i.start()
         except botocore.exceptions.ClientError as e:
-            print(" Cound not start {0}".format(i.id) + str(e))
+            print(" Cound not start {0} ".format(i.id) + str(e))
             continue
     return
 
